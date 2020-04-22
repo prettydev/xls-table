@@ -4,16 +4,15 @@
       <table>
         <tbody>
           <th>name</th>
-          <th>email</th>
           <th>age</th>
+          <th>job</th>
           <tr v-for="(item, key) in locations" :key="key">
             <td>{{ item.name }}</td>
-            <td>{{ item.email }}</td>
             <td>{{ item.age }}</td>
+            <td>{{ item.job }}</td>
           </tr>
         </tbody>
       </table>
-      <div id="json"></div>
       <input
         type="file"
         name="fields[assetsFieldHandle][]"
@@ -23,18 +22,22 @@
         ref="file"
         accept=".xls, .xlsx, .csv"
       />
-
       <div
         class="drop-rect"
         @dragover="dragover"
         @dragleave="dragleave"
         @drop="drop"
-      >Drop here excel or csv file</div>
+      >
+        Drop here excel or csv file
+      </div>
+
+      <textarea @paste="onPaste" @blur="onBlur"></textarea>
     </div>
   </div>
 </template>
 <script>
 import XLSX from "xlsx";
+import csv2json from "csvjson-csv2json";
 export default {
   name: "DropArea",
   delimiters: ["${", "}"], // Avoid Twig conflicts
@@ -45,22 +48,22 @@ export default {
         {
           id: 1,
           name: "Richard Hendricks",
-          email: "richard@piedpiper.com",
-          age: 25
+          job: "richard@piedpiper.com",
+          age: 25,
         },
         {
           id: 2,
           name: "Bertram Gilfoyle",
-          email: "gilfoyle@piedpiper.com",
-          age: 27
+          job: "gilfoyle@piedpiper.com",
+          age: 27,
         },
         {
           id: 3,
           name: "Dinesh Chugtai",
-          email: "dinesh@piedpiper.com",
-          age: 28
-        }
-      ]
+          job: "dinesh@piedpiper.com",
+          age: 28,
+        },
+      ],
     };
   },
   methods: {
@@ -85,7 +88,7 @@ export default {
     },
     dragleave(event) {
       event.preventDefault();
-      document.querySelector(".drop-rect").style.background = "green";
+      document.querySelector(".drop-rect").style.background = "#eee";
     },
     drop(event) {
       event.preventDefault();
@@ -93,8 +96,14 @@ export default {
       this.onChange();
 
       document.querySelector(".drop-rect").style.background = "#aaa";
-    }
-  }
+    },
+    onPaste(event) {
+      console.log("on paste", event);
+    },
+    onBlur(event) {
+      this.locations = csv2json(event.target.value, { parseNumbers: true });
+    },
+  },
 };
 </script>
 <style>
@@ -109,7 +118,7 @@ export default {
 }
 .drop-rect {
   height: 200px;
-  background: #aa0;
+  background: #eee;
 }
 .bg-gray-100 {
   background: #369;

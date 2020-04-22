@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import DropArea from "./components/DropArea";
+import DropArea from "./DropArea";
 
 export default {
   name: "App",
