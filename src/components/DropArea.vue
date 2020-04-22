@@ -6,7 +6,7 @@
           <th>name</th>
           <th>email</th>
           <th>age</th>
-          <tr v-for="item in locations" :key="item.id">
+          <tr v-for="(item, key) in locations" :key="key">
             <td>{{ item.name }}</td>
             <td>{{ item.email }}</td>
             <td>{{ item.age }}</td>
@@ -66,13 +66,14 @@ export default {
   methods: {
     onChange() {
       this.file = this.$refs.file.files[0];
+      let self = this;
       var reader = new FileReader();
       reader.onload = async function(e) {
         var data = new Uint8Array(e.target.result);
         var workbook = XLSX.read(data, { type: "array" });
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
-        this.locations = await XLSX.utils.sheet_to_json(worksheet);
+        self.locations = await XLSX.utils.sheet_to_json(worksheet);
       };
       reader.readAsArrayBuffer(this.file);
     },
