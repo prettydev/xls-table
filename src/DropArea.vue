@@ -1,38 +1,46 @@
 <template>
-  <div class="drop-area" id="drop-area">
-    <div class="p-12 border">
-      <table>
+  <div id="drop-area">
+    <h1>Paste your location data below to map it:</h1>
+    <div class="common table-div">
+      <table class="data-table">
         <tbody>
           <th>name</th>
           <th>age</th>
           <th>job</th>
-          <tr v-for="(item, key) in locations" :key="key">
+          <tr v-for="(item, key) in json_array" :key="key">
             <td>{{ item.name }}</td>
             <td>{{ item.age }}</td>
             <td>{{ item.job }}</td>
           </tr>
         </tbody>
       </table>
-      <input
-        type="file"
-        name="fields[assetsFieldHandle][]"
-        id="assetsFieldHandle"
-        class="w-px h-px opacity-0 overflow-hidden absolute"
-        @change="onChange"
-        ref="file"
-        accept=".xls, .xlsx, .csv"
-      />
-      <div
-        class="drop-rect"
-        @dragover="dragover"
-        @dragleave="dragleave"
-        @drop="drop"
-      >
-        Drop here excel or csv file
-      </div>
-
-      <textarea @paste="onPaste" @blur="onBlur"></textarea>
     </div>
+    <div
+      class="drop-rect common"
+      @dragover="dragover"
+      @dragleave="dragleave"
+      @drop="drop"
+    >
+      Drop here excel or csv file
+    </div>
+    <div class="common">
+      <textarea
+        class="csv-area"
+        @paste="onPaste"
+        @blur="onBlur"
+        v-model="csv_data"
+      ></textarea>
+    </div>
+
+    <input
+      type="file"
+      name="fields[assetsFieldHandle][]"
+      id="assetsFieldHandle"
+      class="w-px h-px opacity-0 overflow-hidden absolute"
+      @change="onChange"
+      ref="file"
+      accept=".xls, .xlsx, .csv"
+    />
   </div>
 </template>
 <script>
@@ -44,7 +52,7 @@ export default {
   data: function() {
     return {
       file: {}, // Store our uploaded files
-      locations: [
+      json_array: [
         {
           id: 1,
           name: "Richard Hendricks",
@@ -63,7 +71,20 @@ export default {
           job: "dinesh@piedpiper.com",
           age: 28,
         },
+        {
+          id: 4,
+          name: "asdfdfDinesh Chugtai",
+          job: "dinesh@piedpiper.com",
+          age: 28,
+        },
+        {
+          id: 5,
+          name: "Dineshsfdgafsd Chugtai",
+          job: "dinesh@piedpiper.com",
+          age: 28,
+        },
       ],
+      csv_data: "",
     };
   },
   methods: {
@@ -76,7 +97,18 @@ export default {
         var workbook = XLSX.read(data, { type: "array" });
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
-        self.locations = await XLSX.utils.sheet_to_json(worksheet);
+        self.json_array = await XLSX.utils.sheet_to_json(worksheet);
+
+        self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
+
+        // self.csv_data = csv_tmp.replace(/,/g, " ");
+
+        // var wb = XLSX.read(csv_tmp, { type: "binary" });
+        // self.csv_data = XLSX.write(wb, {
+        //   bookType: "prn",
+        //   type: "string",
+        //   sheet: "Sheet1",
+        // });
       };
       reader.readAsArrayBuffer(this.file);
     },
@@ -98,10 +130,11 @@ export default {
       document.querySelector(".drop-rect").style.background = "#aaa";
     },
     onPaste(event) {
-      console.log("on paste", event);
+      this.csv_data = event.target.value;
     },
     onBlur(event) {
-      this.locations = csv2json(event.target.value, { parseNumbers: true });
+      // this.json_array = await XLSX.utils.csv2json(event.target.value);
+      this.json_array = csv2json(event.target.value, { parseNumbers: true });
     },
   },
 };
@@ -110,20 +143,30 @@ export default {
 [v-cloak] {
   display: none;
 }
-.drop-area {
-  margin-top: 200px;
-  margin-left: 100px;
-  max-width: 680px;
-  background: #0aa;
+#drop-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+}
+.common {
+  width: 80%;
+  height: 170px;
+  /* position: absolute; */
+}
+.table-div {
+  overflow: hidden;
 }
 .drop-rect {
-  height: 200px;
   background: #eee;
 }
-.bg-gray-100 {
-  background: #369;
-}
-.bg-gray-300 {
-  background: #963;
+.csv-area {
+  height: 100%;
 }
 </style>
