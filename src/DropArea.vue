@@ -3,7 +3,16 @@
     <h1>Paste your location data below to map it:</h1>
     <div class="drop-area">
       <div class="common table-div">
-        <table class="data-table">
+        <label class="tooltip"></label>
+        <table
+          class="data-table"
+          @dragover="dragOver"
+          @dragleave="dragLeave"
+          @drop="drop"
+          @mouseover="rectOver"
+          @mouseleave="rectLeave"
+          @click="rectClick"
+        >
           <tbody>
             <th>name</th>
             <th>age</th>
@@ -15,17 +24,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-      <div
-        class="drop-rect common"
-        @dragover="dragOver"
-        @dragleave="dragLeave"
-        @drop="drop"
-        @mouseover="rectOver"
-        @mouseleave="rectLeave"
-        @click="rectClick"
-      >
-        <label class="tooltip"></label>
       </div>
       <div class="common csv-area">
         <textarea
@@ -82,6 +80,7 @@ export default {
     };
   },
   mounted: function() {
+    console.log("mounted");
     this.rectLeave();
     this.hideCSVArea();
     const json2csvParser = new Parser();
@@ -103,23 +102,30 @@ export default {
       reader.readAsArrayBuffer(this.file);
     },
     dragOver(event) {
+      console.log("dragOver");
       event.preventDefault();
-      this.showGreenBorder();
       document.querySelector("label.tooltip").textContent =
         "drop your file here";
-      document.querySelector("label.tooltip").style.display = "";
+      this.showEffect();
     },
     dragLeave(event) {
+      console.log("dragLeave");
       event.preventDefault();
-      this.showGrayBorder();
-      document.querySelector("label.tooltip").style.display = "none";
+      this.resetEffect();
     },
     drop(event) {
       event.preventDefault();
       this.$refs.file.files = event.dataTransfer.files;
+      this.resetEffect();
       this.onChange();
-
-      document.querySelector(".drop-rect").style.background = "#aaa";
+    },
+    showEffect() {
+      document.querySelector(".table-div").style.border = "3px green solid";
+      document.querySelector("label.tooltip").style.display = "inline";
+    },
+    resetEffect() {
+      document.querySelector(".table-div").style.border = "1px gray solid";
+      document.querySelector("label.tooltip").style.display = "none";
     },
     onPaste(event) {
       this.csv_data = event.target.value;
@@ -133,45 +139,20 @@ export default {
         console.log(e);
       }
     },
-    rectOver() {
+    rectOver(e) {
+      e.preventDefault();
+      console.log("rectOver");
       document.querySelector("label.tooltip").textContent =
         "click to copy/paste, or drop your file here";
-      document.querySelector("label.tooltip").style.display = "";
-      this.showGreenBorder();
     },
     rectLeave() {
-      document.querySelector("label.tooltip").style.display = "none";
-      this.showGrayBorder();
-    },
-    showGreenBorder() {
-      document.querySelector(".drop-rect").style.border = "3px green solid";
-    },
-    showGrayBorder() {
-      document.querySelector(".drop-rect").style.border = "1px gray solid";
+      console.log("rectLeave");
     },
     rectClick() {
+      console.log("rectClick");
       this.showCSVArea();
       this.$refs.csvarea.focus();
       this.$refs.csvarea.select();
-    },
-    onTable() {
-      let next_state =
-        document.querySelector(".table-div").style.display === "none"
-          ? ""
-          : "none";
-      document.querySelector(".table-div").style.display = next_state;
-    },
-    onDropRect() {
-      let next_state =
-        document.querySelector(".drop-rect").style.display === "none"
-          ? ""
-          : "none";
-      document.querySelector(".drop-rect").style.display = next_state;
-    },
-    onCSVArea() {
-      document.querySelector(".csv-area").style.display === "none"
-        ? this.showCSVArea()
-        : this.hideCSVArea();
     },
     showCSVArea() {
       document.querySelector(".csv-area").style.display = "";
@@ -182,7 +163,7 @@ export default {
   },
 };
 </script>
-<style>
+<style lang="scss">
 [v-cloak] {
   display: none;
 }
@@ -199,41 +180,46 @@ export default {
   position: absolute;
   width: 80%;
   height: 20%;
-}
-.common {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
-.table-div {
-  overflow: hidden;
-}
-.drop-rect {
-  background: white;
-  border-radius: 5px;
-  border: 1px gray solid;
-  opacity: 0.7;
-  display: flex;
-  -moz-box-shadow: inset 0 0 10px #666;
-  -webkit-box-shadow: inset 0 0 10px #666;
-  box-shadow: inset 0 0 10px #666;
-}
-.csv-area textarea {
-  height: 100%;
-}
-.csv-area textarea:focus {
-  background: white;
-}
-label.tooltip {
-  margin: auto;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  color: black;
-  font-size: 28px;
-  font-weight: bold;
-  z-index: 100;
-  opacity: 1;
+  .common {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+  }
+  .table-div {
+    overflow: hidden;
+    background: white;
+    border-radius: 5px;
+    border: 1px gray solid;
+    /* opacity: 0.7; */
+    display: flex;
+    -moz-box-shadow: inset 0 0 10px #666;
+    -webkit-box-shadow: inset 0 0 10px #666;
+    box-shadow: inset 0 0 10px #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .tooltip {
+      position: absolute;
+      color: black;
+      font-size: 28px;
+      font-weight: bold;
+      margin: 0 auto;
+      display: none;
+    }
+    &:hover {
+      border: 3px green solid;
+      .tooltip {
+        display: inline;
+      }
+    }
+  }
+  .csv-area {
+    textarea {
+      height: 100%;
+      &:focus {
+        background: white;
+      }
+    }
+  }
 }
 </style>
