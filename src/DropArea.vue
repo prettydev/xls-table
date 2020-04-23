@@ -18,16 +18,17 @@
       </div>
       <div
         class="drop-rect common"
-        @dragover="dragover"
-        @dragleave="dragleave"
+        @dragover="dragOver"
+        @dragleave="dragLeave"
         @drop="drop"
-        @mouseover="rectover"
-        @mouseleave="rectleave"
+        @mouseover="rectOver"
+        @mouseleave="rectLeave"
+        @click="rectClick"
       >
-        <label class="tooltip">Drop here excel or csv file</label>
+        <label class="tooltip"></label>
       </div>
       <div class="common csv-area">
-        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data"></textarea>
+        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
       </div>
     </div>
     <input
@@ -39,9 +40,6 @@
       ref="file"
       accept=".xls, .xlsx, .csv"
     />
-    <button @click="onTable">table</button>
-    <button @click="onDropRect">droprect</button>
-    <button @click="onCSVArea">csvarea</button>
   </div>
 </template>
 <script>
@@ -49,10 +47,11 @@ import XLSX from "xlsx";
 import csv2json from "csvjson-csv2json";
 export default {
   name: "DropArea",
-  delimiters: ["${", "}"], // Avoid Twig conflicts
+  delimiters: ["${", "}"],
   data: function() {
     return {
-      file: {}, // Store our uploaded files
+      file: {},
+      csv_data: "",
       json_array: [
         {
           id: 1,
@@ -84,13 +83,12 @@ export default {
           job: "dinesh@piedpiper.com",
           age: 28
         }
-      ],
-      csv_data: ""
+      ]
     };
   },
   mounted: function() {
-    console.log(132);
-    this.rectleave();
+    this.rectLeave();
+    this.hideCSVArea();
   },
   methods: {
     onChange() {
@@ -107,7 +105,6 @@ export default {
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
 
         // self.csv_data = csv_tmp.replace(/,/g, " ");
-
         // var wb = XLSX.read(csv_tmp, { type: "binary" });
         // self.csv_data = XLSX.write(wb, {
         //   bookType: "prn",
@@ -117,15 +114,17 @@ export default {
       };
       reader.readAsArrayBuffer(this.file);
     },
-    dragover(event) {
+    dragOver(event) {
       event.preventDefault();
-      if (!document.querySelector(".drop-rect").style.background !== "#aaa") {
-        document.querySelector(".drop-rect").style.background = "#aaa";
-      }
+      this.showGreenBorder();
+      document.querySelector("label.tooltip").textContent =
+        "drop your file here";
+      document.querySelector("label.tooltip").style.display = "";
     },
-    dragleave(event) {
+    dragLeave(event) {
       event.preventDefault();
-      document.querySelector(".drop-rect").style.background = "#eee";
+      this.showGrayBorder();
+      document.querySelector("label.tooltip").style.display = "none";
     },
     drop(event) {
       event.preventDefault();
@@ -138,14 +137,33 @@ export default {
       this.csv_data = event.target.value;
     },
     onBlur(event) {
-      // this.json_array = await XLSX.utils.csv2json(event.target.value);
-      this.json_array = csv2json(event.target.value, { parseNumbers: true });
+      this.hideCSVArea();
+      try {
+        // this.json_array = await XLSX.utils.csv2json(event.target.value);
+        this.json_array = csv2json(event.target.value, { parseNumbers: true });
+      } catch (e) {
+        console.log(e);
+      }
     },
-    rectover() {
+    rectOver() {
+      document.querySelector("label.tooltip").textContent =
+        "click to copy/paste, or drop your file here";
       document.querySelector("label.tooltip").style.display = "";
+      this.showGreenBorder();
     },
-    rectleave() {
+    rectLeave() {
       document.querySelector("label.tooltip").style.display = "none";
+      this.showGrayBorder();
+    },
+    showGreenBorder() {
+      document.querySelector(".drop-rect").style.border = "3px green solid";
+    },
+    showGrayBorder() {
+      document.querySelector(".drop-rect").style.border = "1px gray solid";
+    },
+    rectClick() {
+      this.showCSVArea();
+      this.$refs.csvarea.focus();
     },
     onTable() {
       let next_state =
@@ -162,11 +180,15 @@ export default {
       document.querySelector(".drop-rect").style.display = next_state;
     },
     onCSVArea() {
-      let next_state =
-        document.querySelector(".csv-area").style.display === "none"
-          ? ""
-          : "none";
-      document.querySelector(".csv-area").style.display = next_state;
+      document.querySelector(".csv-area").style.display === "none"
+        ? this.showCSVArea()
+        : this.hideCSVArea();
+    },
+    showCSVArea() {
+      document.querySelector(".csv-area").style.display = "";
+    },
+    hideCSVArea() {
+      document.querySelector(".csv-area").style.display = "none";
     }
   }
 };
@@ -198,9 +220,14 @@ export default {
   overflow: hidden;
 }
 .drop-rect {
-  background: #eee;
-  opacity: 0.5;
+  background: white;
+  border-radius: 5px;
+  border: 1px gray solid;
+  opacity: 0.7;
   display: flex;
+  -moz-box-shadow: inset 0 0 10px #666;
+  -webkit-box-shadow: inset 0 0 10px #666;
+  box-shadow: inset 0 0 10px #666;
 }
 .csv-area textarea {
   height: 100%;
@@ -214,5 +241,10 @@ label.tooltip {
   right: 0;
   top: 0;
   bottom: 0;
+  color: black;
+  font-size: 28px;
+  font-weight: bold;
+  z-index: 100;
+  opacity: 1;
 }
 </style>
