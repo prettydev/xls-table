@@ -14,13 +14,11 @@
           @click="rectClick"
         >
           <tbody>
-            <th>name</th>
-            <th>age</th>
-            <th>job</th>
+            <th v-for="(header, key) in headers" :key="key">{{ header }}</th>
             <tr v-for="(item, key) in json_array" :key="key">
-              <td>{{ item.name }}</td>
-              <td>{{ item.age }}</td>
-              <td>{{ item.job }}</td>
+              <td v-for="(header, ikey) in headers" :key="ikey">
+                {{ item[header] }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -75,7 +73,14 @@ export default {
           job: "dinesh@piedpiper.com",
           age: 28,
         },
+        {
+          id: 4,
+          name: "Dinesh Chugtai",
+          job: "dinesh@piedpiper.com",
+          age: 28,
+        },
       ],
+      headers: ["id", "name", "job", "age"],
       csv_data: "",
     };
   },
@@ -87,6 +92,26 @@ export default {
     this.csv_data = json2csvParser.parse(this.json_array);
   },
   methods: {
+    getSheetHeader(sheet) {
+      console.log(435);
+      var headers = [];
+      var range = XLSX.utils.decode_range(sheet["!ref"]);
+      var C,
+        R = range.s.r; /* start in the first row */
+      /* walk every column in the range */
+      for (C = range.s.c; C <= range.e.c; ++C) {
+        var cell =
+          sheet[
+            XLSX.utils.encode_cell({ c: C, r: R })
+          ]; /* find the cell in the first row */
+
+        var hdr = "UNKNOWN " + C; // <-- replace with your desired default
+        if (cell && cell.t) hdr = XLSX.utils.format_cell(cell);
+
+        headers.push(hdr);
+      }
+      this.headers = headers;
+    },
     onChange() {
       this.file = this.$refs.file.files[0];
       let self = this;
@@ -98,6 +123,7 @@ export default {
         let worksheet = workbook.Sheets[sheetName];
         self.json_array = await XLSX.utils.sheet_to_json(worksheet);
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
+        self.getSheetHeader(worksheet);
       };
       reader.readAsArrayBuffer(this.file);
     },
@@ -133,7 +159,6 @@ export default {
     onBlur(event) {
       this.hideCSVArea();
       try {
-        // this.json_array = await XLSX.utils.csv2json(event.target.value);
         this.json_array = csv2json(event.target.value, { parseNumbers: true });
       } catch (e) {
         console.log(e);
@@ -190,7 +215,6 @@ export default {
     background: white;
     border-radius: 5px;
     border: 1px gray solid;
-    /* opacity: 0.7; */
     display: flex;
     -moz-box-shadow: inset 0 0 10px #666;
     -webkit-box-shadow: inset 0 0 10px #666;
