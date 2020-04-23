@@ -1,37 +1,35 @@
 <template>
   <div id="drop-area">
     <h1>Paste your location data below to map it:</h1>
-    <div class="common table-div">
-      <table class="data-table">
-        <tbody>
-          <th>name</th>
-          <th>age</th>
-          <th>job</th>
-          <tr v-for="(item, key) in json_array" :key="key">
-            <td>{{ item.name }}</td>
-            <td>{{ item.age }}</td>
-            <td>{{ item.job }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="drop-area">
+      <div class="common table-div">
+        <table class="data-table">
+          <tbody>
+            <th>name</th>
+            <th>age</th>
+            <th>job</th>
+            <tr v-for="(item, key) in json_array" :key="key">
+              <td>{{ item.name }}</td>
+              <td>{{ item.age }}</td>
+              <td>{{ item.job }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        class="drop-rect common"
+        @dragover="dragover"
+        @dragleave="dragleave"
+        @drop="drop"
+        @mouseover="rectover"
+        @mouseleave="rectleave"
+      >
+        <label class="tooltip">Drop here excel or csv file</label>
+      </div>
+      <div class="common csv-area">
+        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data"></textarea>
+      </div>
     </div>
-    <div
-      class="drop-rect common"
-      @dragover="dragover"
-      @dragleave="dragleave"
-      @drop="drop"
-    >
-      Drop here excel or csv file
-    </div>
-    <div class="common">
-      <textarea
-        class="csv-area"
-        @paste="onPaste"
-        @blur="onBlur"
-        v-model="csv_data"
-      ></textarea>
-    </div>
-
     <input
       type="file"
       name="fields[assetsFieldHandle][]"
@@ -41,6 +39,9 @@
       ref="file"
       accept=".xls, .xlsx, .csv"
     />
+    <button @click="onTable">table</button>
+    <button @click="onDropRect">droprect</button>
+    <button @click="onCSVArea">csvarea</button>
   </div>
 </template>
 <script>
@@ -57,35 +58,39 @@ export default {
           id: 1,
           name: "Richard Hendricks",
           job: "richard@piedpiper.com",
-          age: 25,
+          age: 25
         },
         {
           id: 2,
           name: "Bertram Gilfoyle",
           job: "gilfoyle@piedpiper.com",
-          age: 27,
+          age: 27
         },
         {
           id: 3,
           name: "Dinesh Chugtai",
           job: "dinesh@piedpiper.com",
-          age: 28,
+          age: 28
         },
         {
           id: 4,
           name: "asdfdfDinesh Chugtai",
           job: "dinesh@piedpiper.com",
-          age: 28,
+          age: 28
         },
         {
           id: 5,
           name: "Dineshsfdgafsd Chugtai",
           job: "dinesh@piedpiper.com",
-          age: 28,
-        },
+          age: 28
+        }
       ],
-      csv_data: "",
+      csv_data: ""
     };
+  },
+  mounted: function() {
+    console.log(132);
+    this.rectleave();
   },
   methods: {
     onChange() {
@@ -136,14 +141,41 @@ export default {
       // this.json_array = await XLSX.utils.csv2json(event.target.value);
       this.json_array = csv2json(event.target.value, { parseNumbers: true });
     },
-  },
+    rectover() {
+      document.querySelector("label.tooltip").style.display = "";
+    },
+    rectleave() {
+      document.querySelector("label.tooltip").style.display = "none";
+    },
+    onTable() {
+      let next_state =
+        document.querySelector(".table-div").style.display === "none"
+          ? ""
+          : "none";
+      document.querySelector(".table-div").style.display = next_state;
+    },
+    onDropRect() {
+      let next_state =
+        document.querySelector(".drop-rect").style.display === "none"
+          ? ""
+          : "none";
+      document.querySelector(".drop-rect").style.display = next_state;
+    },
+    onCSVArea() {
+      let next_state =
+        document.querySelector(".csv-area").style.display === "none"
+          ? ""
+          : "none";
+      document.querySelector(".csv-area").style.display = next_state;
+    }
+  }
 };
 </script>
 <style>
 [v-cloak] {
   display: none;
 }
-#drop-area {
+.drop-area {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -154,19 +186,33 @@ export default {
   bottom: 0;
   left: 0;
   position: absolute;
+  width: 80%;
+  height: 20%;
 }
 .common {
-  width: 80%;
-  height: 170px;
-  /* position: absolute; */
+  width: 100%;
+  height: 100%;
+  position: absolute;
 }
 .table-div {
   overflow: hidden;
 }
 .drop-rect {
   background: #eee;
+  opacity: 0.5;
+  display: flex;
 }
-.csv-area {
+.csv-area textarea {
   height: 100%;
+}
+.csv-area textarea:focus {
+  background: white;
+}
+label.tooltip {
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 </style>
