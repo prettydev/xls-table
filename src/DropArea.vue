@@ -28,7 +28,12 @@
         <label class="tooltip"></label>
       </div>
       <div class="common csv-area">
-        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
+        <textarea
+          @paste="onPaste"
+          @blur="onBlur"
+          v-model="csv_data"
+          ref="csvarea"
+        ></textarea>
       </div>
     </div>
     <input
@@ -45,50 +50,42 @@
 <script>
 import XLSX from "xlsx";
 import csv2json from "csvjson-csv2json";
+import { Parser } from "json2csv";
+
 export default {
   name: "DropArea",
   delimiters: ["${", "}"],
   data: function() {
     return {
       file: {},
-      csv_data: "",
       json_array: [
         {
           id: 1,
           name: "Richard Hendricks",
           job: "richard@piedpiper.com",
-          age: 25
+          age: 25,
         },
         {
           id: 2,
           name: "Bertram Gilfoyle",
           job: "gilfoyle@piedpiper.com",
-          age: 27
+          age: 27,
         },
         {
           id: 3,
           name: "Dinesh Chugtai",
           job: "dinesh@piedpiper.com",
-          age: 28
+          age: 28,
         },
-        {
-          id: 4,
-          name: "asdfdfDinesh Chugtai",
-          job: "dinesh@piedpiper.com",
-          age: 28
-        },
-        {
-          id: 5,
-          name: "Dineshsfdgafsd Chugtai",
-          job: "dinesh@piedpiper.com",
-          age: 28
-        }
-      ]
+      ],
+      csv_data: "",
     };
   },
   mounted: function() {
     this.rectLeave();
     this.hideCSVArea();
+    const json2csvParser = new Parser();
+    this.csv_data = json2csvParser.parse(this.json_array);
   },
   methods: {
     onChange() {
@@ -101,16 +98,7 @@ export default {
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
         self.json_array = await XLSX.utils.sheet_to_json(worksheet);
-
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
-
-        // self.csv_data = csv_tmp.replace(/,/g, " ");
-        // var wb = XLSX.read(csv_tmp, { type: "binary" });
-        // self.csv_data = XLSX.write(wb, {
-        //   bookType: "prn",
-        //   type: "string",
-        //   sheet: "Sheet1",
-        // });
       };
       reader.readAsArrayBuffer(this.file);
     },
@@ -164,6 +152,7 @@ export default {
     rectClick() {
       this.showCSVArea();
       this.$refs.csvarea.focus();
+      this.$refs.csvarea.select();
     },
     onTable() {
       let next_state =
@@ -189,8 +178,8 @@ export default {
     },
     hideCSVArea() {
       document.querySelector(".csv-area").style.display = "none";
-    }
-  }
+    },
+  },
 };
 </script>
 <style>
