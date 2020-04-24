@@ -10,9 +10,7 @@
       >
         <table>
           <tbody>
-            <th v-for="(header, key) in headers" :key="'th' + key">
-              {{ header }}
-            </th>
+            <th v-for="(header, key) in headers" :key="'th' + key">{{ header }}</th>
             <tr v-for="(item, key) in json_array" :key="'tr' + key">
               <td v-for="(header, ikey) in headers" :key="'td' + ikey">
                 <div v-if="header !== 'location'">{{ item[header] }}</div>
@@ -47,12 +45,7 @@
         </table>
       </div>
       <div class="common csv-area">
-        <textarea
-          @paste="onPaste"
-          @blur="onBlur"
-          v-model="csv_data"
-          ref="csvarea"
-        ></textarea>
+        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
       </div>
     </div>
     <input
@@ -82,29 +75,29 @@ export default {
           id: 1,
           name: "Richard Hendricks",
           job: "richard@piedpiper.com",
-          age: 25,
+          age: 25
         },
         {
           id: 2,
           name: "Bertram Gilfoyle",
           job: "gilfoyle@piedpiper.com",
-          age: 27,
+          age: 27
         },
         {
           id: 3,
           name: "Dinesh Chugtai",
           job: "dinesh@piedpiper.com",
-          age: 28,
+          age: 28
         },
         {
           id: 4,
           name: "Dinesh Chugtai",
           job: "dinesh@piedpiper.com",
-          age: 28,
-        },
+          age: 28
+        }
       ],
       headers: ["id", "name", "job", "age"],
-      csv_data: "",
+      csv_data: ""
     };
   },
   mounted: function() {
@@ -157,7 +150,7 @@ export default {
           item_tmp += `${value}` + " ";
         }
 
-        await new Promise((resolve) => {
+        item.location = await new Promise((resolve, reject) => {
           setTimeout(async () => {
             try {
               let res = await axios.get(
@@ -165,14 +158,13 @@ export default {
                   item_tmp
               );
               item.location = res.data;
+              resolve(item.location);
             } catch (e) {
-              console.log(e);
+              reject(e);
             }
           }, 500);
-          setTimeout(resolve, 500);
         });
       }
-      this.json_array = json_array;
     },
     dragOver(event) {
       event.preventDefault();
@@ -201,7 +193,7 @@ export default {
       this.hideCSVArea();
       try {
         this.json_array = await csv2json(event.target.value, {
-          parseNumbers: true,
+          parseNumbers: true
         });
         await this.getLocation(this.json_array);
       } catch (e) {
@@ -218,8 +210,8 @@ export default {
     },
     hideCSVArea() {
       document.querySelector(".csv-area").style.display = "none";
-    },
-  },
+    }
+  }
 };
 </script>
 <style lang="scss">
