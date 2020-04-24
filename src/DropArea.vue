@@ -159,11 +159,15 @@ export default {
 
         await new Promise((resolve) => {
           setTimeout(async () => {
-            let res = await axios.get(
-              "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
-                item_tmp
-            );
-            item.location = res.data;
+            try {
+              let res = await axios.get(
+                "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
+                  item_tmp
+              );
+              item.location = res.data;
+            } catch (e) {
+              console.log(e);
+            }
           }, 500);
           setTimeout(resolve, 500);
         });
