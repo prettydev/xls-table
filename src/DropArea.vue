@@ -71,9 +71,9 @@ import axios from "axios";
 export default {
   name: "DropArea",
   delimiters: ["${", "}"],
-  loading: false,
   data: function() {
     return {
+      loading: false,
       file: {},
       json_array: [
         {
@@ -152,22 +152,21 @@ export default {
     async getLocation(json_array) {
       for (let item of json_array) {
         let item_tmp = "";
-        for (let [key, value] of Object.entries(item)) {
-          key === 0;
-          item_tmp += `${value}` + " ";
+        for (let obj of Object.entries(item)) {
+          item_tmp += `${obj[1]} `;
         }
 
         item.location = await new Promise(resolve => {
           setTimeout(async () => {
             try {
-              let res = await axios.get(
+              let url =
                 "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
-                  item_tmp
-              );
+                item_tmp;
+              let res = await axios.get(url);
+              console.log(url);
               item.location = res.data;
               resolve(item.location);
             } catch (e) {
-              // reject(`no result`);
               resolve([]);
             }
           }, 500);
