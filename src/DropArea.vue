@@ -8,7 +8,8 @@
         @drop="drop"
         @click="rectClick"
       >
-        <table>
+        <div v-if="loading" class="loading">...loading</div>
+        <table v-if="!loading">
           <tbody>
             <th v-for="(header, key) in headers" :key="'th' + key">{{ header }}</th>
             <tr v-for="(item, key) in json_array" :key="'tr' + key">
@@ -24,6 +25,9 @@
                       <th>lat,lon</th>
                       <th>licence</th>
                       <th>osm_id,osm_type</th>
+                      <tr v-if="item[header].length === 0">
+                        <td colspan="7" style="text-align:center;font-weight:bold">no result</td>
+                      </tr>
                       <tr v-for="(loc, k) in item[header]" :key="k">
                         <td>
                           {{ loc.boundingbox[0] }}, {{ loc.boundingbox[1] }},
@@ -67,6 +71,7 @@ import axios from "axios";
 export default {
   name: "DropArea",
   delimiters: ["${", "}"],
+  loading: false,
   data: function() {
     return {
       file: {},
@@ -131,6 +136,7 @@ export default {
       let self = this;
       var reader = new FileReader();
       reader.onload = async function(e) {
+        self.loading = true;
         var data = new Uint8Array(e.target.result);
         var workbook = XLSX.read(data, { type: "array" });
         let sheetName = workbook.SheetNames[0];
@@ -139,6 +145,7 @@ export default {
         await self.getLocation(self.json_array);
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
         self.getSheetHeader(worksheet);
+        self.loading = false;
       };
       reader.readAsArrayBuffer(this.file);
     },
@@ -150,7 +157,7 @@ export default {
           item_tmp += `${value}` + " ";
         }
 
-        item.location = await new Promise((resolve, reject) => {
+        item.location = await new Promise(resolve => {
           setTimeout(async () => {
             try {
               let res = await axios.get(
@@ -160,7 +167,8 @@ export default {
               item.location = res.data;
               resolve(item.location);
             } catch (e) {
-              reject(e);
+              // reject(`no result`);
+              resolve([]);
             }
           }, 500);
         });
@@ -195,7 +203,7 @@ export default {
         this.json_array = await csv2json(event.target.value, {
           parseNumbers: true
         });
-        await this.getLocation(this.json_array);
+        this.getLocation(this.json_array);
       } catch (e) {
         console.log(e);
       }
@@ -258,6 +266,11 @@ export default {
       }
       th {
         border-bottom: 1px red solid;
+      }
+      .loading {
+        font-weight: bold;
+        font-size: 30;
+        padding-top: 100px;
       }
     }
     .csv-area {
