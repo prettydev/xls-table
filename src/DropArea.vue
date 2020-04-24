@@ -142,15 +142,15 @@ export default {
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
         self.json_array = await XLSX.utils.sheet_to_json(worksheet);
-        await self.getLocation(self.json_array);
+        await self.getLocation();
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
         self.getSheetHeader(worksheet);
         self.loading = false;
       };
       reader.readAsArrayBuffer(this.file);
     },
-    async getLocation(json_array) {
-      for (let item of json_array) {
+    async getLocation() {
+      for (let item of this.json_array) {
         let item_tmp = "";
         for (let obj of Object.entries(item)) {
           item_tmp += `${obj[1]} `;
@@ -169,7 +169,7 @@ export default {
             } catch (e) {
               resolve([]);
             }
-          }, 500);
+          }, 200);
         });
       }
     },
@@ -199,18 +199,25 @@ export default {
     async onBlur(event) {
       this.hideCSVArea();
       try {
+        this.loading = true;
         this.json_array = await csv2json(event.target.value, {
           parseNumbers: true
         });
-        this.getLocation(this.json_array);
+
+        await this.getLocation();
+        this.headers = [];
+        for (let obj of Object.entries(this.json_array[0])) {
+          this.headers.push(obj[0]);
+        }
+        this.loading = false;
       } catch (e) {
         console.log(e);
       }
     },
     rectClick() {
-      // this.showCSVArea();
-      // this.$refs.csvarea.focus();
-      // this.$refs.csvarea.select();
+      this.showCSVArea();
+      this.$refs.csvarea.focus();
+      this.$refs.csvarea.select();
     },
     showCSVArea() {
       document.querySelector(".csv-area").style.display = "";
