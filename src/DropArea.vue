@@ -1,23 +1,46 @@
 <template>
   <div id="drop-area">
-    <h1>Paste your location data below to map it:</h1>
     <div class="drop-area">
-      <div class="common table-div">
-        <label class="tooltip"></label>
-        <table
-          class="data-table"
-          @dragover="dragOver"
-          @dragleave="dragLeave"
-          @drop="drop"
-          @mouseover="rectOver"
-          @mouseleave="rectLeave"
-          @click="rectClick"
-        >
+      <div
+        class="common table-div"
+        @dragover="dragOver"
+        @dragleave="dragLeave"
+        @drop="drop"
+        @click="rectClick"
+      >
+        <table>
           <tbody>
-            <th v-for="(header, key) in headers" :key="key">{{ header }}</th>
-            <tr v-for="(item, key) in json_array" :key="key">
-              <td v-for="(header, ikey) in headers" :key="ikey">
-                {{ item[header] }}
+            <th v-for="(header, key) in headers" :key="'th' + key">
+              {{ header }}
+            </th>
+            <tr v-for="(item, key) in json_array" :key="'tr' + key">
+              <td v-for="(header, ikey) in headers" :key="'td' + ikey">
+                <div v-if="header !== 'location'">{{ item[header] }}</div>
+                <div v-if="header === 'location'">
+                  <table>
+                    <tbody>
+                      <th>boundingbox</th>
+                      <th>class,type</th>
+                      <th>display_name</th>
+                      <th>place_id,importance</th>
+                      <th>lat,lon</th>
+                      <th>licence</th>
+                      <th>osm_id,osm_type</th>
+                      <tr v-for="(loc, k) in item[header]" :key="k">
+                        <td>
+                          {{ loc.boundingbox[0] }}, {{ loc.boundingbox[1] }},
+                          {{ loc.boundingbox[2] }}, {{ loc.boundingbox[3] }}
+                        </td>
+                        <td>{{ loc.class }},{{ loc.type }}</td>
+                        <td>{{ loc.display_name }}</td>
+                        <td>{{ loc.place_id }},{{ loc.importance }}</td>
+                        <td>{{ loc.lat }}, {{ loc.lon }}</td>
+                        <td>{{ loc.licence }}</td>
+                        <td>{{ loc.osm_id }},{{ loc.osm_type }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -36,7 +59,6 @@
       type="file"
       name="fields[assetsFieldHandle][]"
       id="assetsFieldHandle"
-      class="w-px h-px opacity-0 overflow-hidden absolute"
       @change="onChange"
       ref="file"
       accept=".xls, .xlsx, .csv"
@@ -47,6 +69,7 @@
 import XLSX from "xlsx";
 import csv2json from "csvjson-csv2json";
 import { Parser } from "json2csv";
+import axios from "axios";
 
 export default {
   name: "DropArea",
@@ -85,15 +108,12 @@ export default {
     };
   },
   mounted: function() {
-    console.log("mounted");
-    this.rectLeave();
     this.hideCSVArea();
     const json2csvParser = new Parser();
     this.csv_data = json2csvParser.parse(this.json_array);
   },
   methods: {
     getSheetHeader(sheet) {
-      console.log(435);
       var headers = [];
       var range = XLSX.utils.decode_range(sheet["!ref"]);
       var C,
@@ -110,7 +130,8 @@ export default {
 
         headers.push(hdr);
       }
-      this.headers = headers;
+
+      this.headers = [...headers, "location"];
     },
     onChange() {
       this.file = this.$refs.file.files[0];
@@ -122,20 +143,38 @@ export default {
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
         self.json_array = await XLSX.utils.sheet_to_json(worksheet);
+        await self.getLocation(self.json_array);
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
         self.getSheetHeader(worksheet);
       };
       reader.readAsArrayBuffer(this.file);
     },
+    async getLocation(json_array) {
+      for (let item of json_array) {
+        let item_tmp = "";
+        for (let [key, value] of Object.entries(item)) {
+          key === 0;
+          item_tmp += `${value}` + " ";
+        }
+
+        await new Promise((resolve) => {
+          setTimeout(async () => {
+            let res = await axios.get(
+              "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
+                item_tmp
+            );
+            item.location = res.data;
+          }, 500);
+          setTimeout(resolve, 500);
+        });
+      }
+      this.json_array = json_array;
+    },
     dragOver(event) {
-      console.log("dragOver");
       event.preventDefault();
-      document.querySelector("label.tooltip").textContent =
-        "drop your file here";
       this.showEffect();
     },
     dragLeave(event) {
-      console.log("dragLeave");
       event.preventDefault();
       this.resetEffect();
     },
@@ -147,37 +186,28 @@ export default {
     },
     showEffect() {
       document.querySelector(".table-div").style.border = "3px green solid";
-      document.querySelector("label.tooltip").style.display = "inline";
     },
     resetEffect() {
       document.querySelector(".table-div").style.border = "1px gray solid";
-      document.querySelector("label.tooltip").style.display = "none";
     },
     onPaste(event) {
       this.csv_data = event.target.value;
     },
-    onBlur(event) {
+    async onBlur(event) {
       this.hideCSVArea();
       try {
-        this.json_array = csv2json(event.target.value, { parseNumbers: true });
+        this.json_array = await csv2json(event.target.value, {
+          parseNumbers: true,
+        });
+        await this.getLocation(this.json_array);
       } catch (e) {
         console.log(e);
       }
     },
-    rectOver(e) {
-      e.preventDefault();
-      console.log("rectOver");
-      document.querySelector("label.tooltip").textContent =
-        "click to copy/paste, or drop your file here";
-    },
-    rectLeave() {
-      console.log("rectLeave");
-    },
     rectClick() {
-      console.log("rectClick");
-      this.showCSVArea();
-      this.$refs.csvarea.focus();
-      this.$refs.csvarea.select();
+      // this.showCSVArea();
+      // this.$refs.csvarea.focus();
+      // this.$refs.csvarea.select();
     },
     showCSVArea() {
       document.querySelector(".csv-area").style.display = "";
@@ -192,56 +222,55 @@ export default {
 [v-cloak] {
   display: none;
 }
-.drop-area {
+#drop-area {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  margin: auto;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  position: absolute;
-  width: 80%;
-  height: 20%;
-  .common {
-    width: 100%;
-    height: 100%;
-    position: absolute;
+  input {
+    padding-top: 70px;
   }
-  .table-div {
-    overflow: hidden;
-    background: white;
-    border-radius: 5px;
-    border: 1px gray solid;
+  .drop-area {
     display: flex;
-    -moz-box-shadow: inset 0 0 10px #666;
-    -webkit-box-shadow: inset 0 0 10px #666;
-    box-shadow: inset 0 0 10px #666;
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    .tooltip {
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    width: 90%;
+    height: 70%;
+    .common {
+      width: 100%;
+      height: 100%;
       position: absolute;
-      color: black;
-      font-size: 28px;
-      font-weight: bold;
-      margin: 0 auto;
-      display: none;
     }
-    &:hover {
-      border: 3px green solid;
-      .tooltip {
-        display: inline;
+    .table-div {
+      overflow: auto;
+      background: white;
+      border-radius: 5px;
+      border: 1px gray solid;
+      display: flex;
+      -moz-box-shadow: inset 0 0 10px #666;
+      -webkit-box-shadow: inset 0 0 10px #666;
+      box-shadow: inset 0 0 10px #666;
+      display: flex;
+      justify-content: center;
+      &:hover {
+        border: 3px green solid;
+      }
+      th {
+        border-bottom: 1px red solid;
       }
     }
-  }
-  .csv-area {
-    textarea {
-      height: 100%;
-      &:focus {
-        background: white;
+    .csv-area {
+      textarea {
+        width: 100%;
+        height: 100%;
+        &:focus {
+          background: white;
+        }
       }
     }
   }
