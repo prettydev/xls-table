@@ -18,27 +18,14 @@
                 <div v-if="header === 'location'">
                   <table>
                     <tbody>
-                      <th>boundingbox</th>
-                      <th>class,type</th>
-                      <th>display_name</th>
-                      <th>place_id,importance</th>
-                      <th>lat,lon</th>
-                      <th>licence</th>
-                      <th>osm_id,osm_type</th>
-                      <tr v-if="item[header].length === 0">
-                        <td colspan="7" style="text-align:center;font-weight:bold">no result</td>
+                      <th>latitude</th>
+                      <th>longitude</th>
+                      <tr v-if="item[header] === undefined || item[header].length === 0">
+                        <td colspan="2" style="text-align:center;font-weight:bold">no result</td>
                       </tr>
                       <tr v-for="(loc, k) in item[header]" :key="k">
-                        <td>
-                          {{ loc.boundingbox[0] }}, {{ loc.boundingbox[1] }},
-                          {{ loc.boundingbox[2] }}, {{ loc.boundingbox[3] }}
-                        </td>
-                        <td>{{ loc.class }},{{ loc.type }}</td>
-                        <td>{{ loc.display_name }}</td>
-                        <td>{{ loc.place_id }},{{ loc.importance }}</td>
-                        <td>{{ loc.lat }}, {{ loc.lon }}</td>
-                        <td>{{ loc.licence }}</td>
-                        <td>{{ loc.osm_id }},{{ loc.osm_type }}</td>
+                        <td>{{ loc.lat }}</td>
+                        <td>{{ loc.lon }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -52,14 +39,17 @@
         <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
       </div>
     </div>
-    <input
-      type="file"
-      name="fields[assetsFieldHandle][]"
-      id="assetsFieldHandle"
-      @change="onChange"
-      ref="file"
-      accept=".xls, .xlsx, .csv"
-    />
+    <div>
+      <input
+        type="file"
+        name="fields[assetsFieldHandle][]"
+        id="assetsFieldHandle"
+        @change="onChange"
+        ref="file"
+        accept=".xls, .xlsx, .csv"
+      />
+      <button @click="callApi">call api</button>
+    </div>
   </div>
 </template>
 <script>
@@ -77,31 +67,117 @@ export default {
       file: {},
       json_array: [
         {
-          id: 1,
-          name: "Richard Hendricks",
-          job: "richard@piedpiper.com",
-          age: 25
+          Address: "Crossgates Mall Road",
+          City: "Albany",
+          State: "NY",
+          Zip: 12203,
+          Name: "Apple Store Cross Gates",
+          Phone: "(518) 869-3192",
+          Group: "Example Group 1",
+          URL: "http://www.apple.com/retail/crossgates/"
         },
         {
-          id: 2,
-          name: "Bertram Gilfoyle",
-          job: "gilfoyle@piedpiper.com",
-          age: 27
+          Address: "Duke Rd & Walden Ave",
+          City: "Buffalo",
+          State: "NY",
+          Zip: 14225,
+          Name: "Apple Store Walden Galleria",
+          Phone: "(716) 685-2762",
+          Group: "Example Group 2",
+          URL: "http://www.apple.com/retail/walden/"
         },
         {
-          id: 3,
-          name: "Dinesh Chugtai",
-          job: "dinesh@piedpiper.com",
-          age: 28
+          Address: "630 Old Country Rd.",
+          City: "Garden City",
+          State: "NY",
+          Zip: 11530,
+          Name: "Apple Store Roosevelt Field",
+          Phone: "(516) 248-3347",
+          Group: "Example Group 3",
+          URL: "http://www.apple.com/retail/rooseveltfield/"
         },
         {
-          id: 4,
-          name: "Dinesh Chugtai",
-          job: "dinesh@piedpiper.com",
-          age: 28
+          Address: "160 Walt Whitman Rd.",
+          City: "Huntington Station",
+          State: "NY",
+          Zip: 11746,
+          Name: "Apple Store Walt Whitman",
+          Phone: "(631) 425-1563",
+          Group: "Example Group 3",
+          URL: "http://www.apple.com/retail/waltwhitman/"
+        },
+        {
+          Address: "9553 Carousel Center Drive",
+          City: "Syracuse",
+          State: "NY",
+          Zip: 13290,
+          Name: "Apple Store Carousel",
+          Phone: "(315) 422-8484",
+          Group: "Example Group 2",
+          URL: "http://www.apple.com/retail/carousel/"
+        },
+        {
+          Address: "2655 Richmond Ave",
+          City: "Staten Island",
+          State: "NY",
+          Zip: 10314,
+          Name: "Apple Store Staten Island",
+          Phone: "(718) 477-4180",
+          Group: "Example Group 1",
+          URL: "http://www.apple.com/retail/statenisland/"
+        },
+        {
+          Address: "7979 Victor Road",
+          City: "Victor",
+          State: "NY",
+          Zip: 14564,
+          Name: "Apple Store Eastview",
+          Phone: "(585) 421-3030",
+          Group: "Example Group 1",
+          URL: "http://www.apple.com/retail/eastview/"
+        },
+        {
+          Address: "1591 Palisades Center Drive",
+          City: "West Nyack",
+          State: "NY",
+          Zip: 10994,
+          Name: "Apple Store Palisades",
+          Phone: "(845) 353-6756",
+          Group: "Example Group 2",
+          URL: "http://www.apple.com/retail/palisades/"
+        },
+        {
+          Address: "125 Westchester Ave.",
+          City: "White Plains",
+          State: "NY",
+          Zip: 10601,
+          Name: "Apple Store The Westchester",
+          Phone: "(914) 428-1877",
+          Group: "Example Group 3",
+          URL: "http://www.apple.com/retail/thewestchester/"
+        },
+        {
+          Address: "103 Prince Street",
+          City: "New York",
+          State: "NY",
+          Zip: 10012,
+          Name: "Apple Store SoHo",
+          Phone: "(212) 226-3126",
+          Group: "Example Group 2",
+          URL: "http://www.apple.com/retail/soho/"
         }
       ],
-      headers: ["id", "name", "job", "age"],
+      headers: [
+        "Address",
+        "City",
+        "State",
+        "Zip",
+        "Name",
+        "Phone",
+        "Group",
+        "URL",
+        "location"
+      ],
       csv_data: ""
     };
   },
@@ -131,25 +207,30 @@ export default {
 
       this.headers = [...headers, "location"];
     },
+    getJsonHeaders() {
+      this.headers = [];
+      for (let obj of Object.entries(this.json_array[0])) {
+        this.headers.push(obj[0]);
+      }
+    },
     onChange() {
       this.file = this.$refs.file.files[0];
       let self = this;
       var reader = new FileReader();
       reader.onload = async function(e) {
-        self.loading = true;
         var data = new Uint8Array(e.target.result);
         var workbook = XLSX.read(data, { type: "array" });
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
         self.json_array = await XLSX.utils.sheet_to_json(worksheet);
-        await self.getLocation();
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
         self.getSheetHeader(worksheet);
-        self.loading = false;
       };
       reader.readAsArrayBuffer(this.file);
     },
-    async getLocation() {
+    async callApi() {
+      this.loading = true;
+      console.log("start call");
       for (let item of this.json_array) {
         let item_tmp = "";
         for (let obj of Object.entries(item)) {
@@ -163,7 +244,6 @@ export default {
                 "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
                 item_tmp;
               let res = await axios.get(url);
-              console.log(url);
               item.location = res.data;
               resolve(item.location);
             } catch (e) {
@@ -172,6 +252,10 @@ export default {
           }, 200);
         });
       }
+      console.log("aaaaaaaaaaaaaaaaa");
+      this.getJsonHeaders();
+      this.loading = false;
+      console.log("end call");
     },
     dragOver(event) {
       event.preventDefault();
@@ -199,17 +283,9 @@ export default {
     async onBlur(event) {
       this.hideCSVArea();
       try {
-        this.loading = true;
         this.json_array = await csv2json(event.target.value, {
           parseNumbers: true
         });
-
-        await this.getLocation();
-        this.headers = [];
-        for (let obj of Object.entries(this.json_array[0])) {
-          this.headers.push(obj[0]);
-        }
-        this.loading = false;
       } catch (e) {
         console.log(e);
       }
