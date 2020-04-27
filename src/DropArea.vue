@@ -200,34 +200,43 @@ export default {
 
       for (let i = 0; i < json_array_tmp.length; i++) {
         let item = this.json_array[i];
-        let item_tmp = "";
+        let city = "",
+          state = "",
+          postalcode = "";
         for (let obj of Object.entries(item)) {
           if (!obj) continue;
-          if (
-            obj[0].toString().toLowerCase() === "address" ||
-            obj[0].toString().toLowerCase() === "state" ||
-            obj[0].toString().toLowerCase() === "city" ||
-            obj[0].toString().toLowerCase() === "zip"
-          )
-            item_tmp += `${obj[1]} `;
+
+          if (obj[0].toString().toLowerCase() === "city")
+            city = `&city=${obj[1]}`;
+          if (obj[0].toString().toLowerCase() === "state")
+            state = `&state=${obj[1]}`;
+          if (obj[0].toString().toLowerCase() === "zip")
+            postalcode = `&postalcode=${obj[1]}`;
         }
 
-        let loc = await new Promise(resolve => {
-          setTimeout(async () => {
-            try {
-              let url =
-                "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
-                item_tmp;
-              let res = await axios.get(url);
-              resolve({ lat: res.data[0].lat, lon: res.data[0].lon });
-              console.log(url);
-            } catch (e) {
-              resolve({ lat: 0, lon: 0 });
-            }
-          }, 200);
-        });
-        item.latitude = loc.lat;
-        item.longitude = loc.lon;
+        let count = 0;
+        let maxTries = 100;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          try {
+            let url =
+              "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&" +
+              city +
+              state +
+              postalcode;
+
+            let loc = await axios.get(url);
+
+            item.latitude = loc.data[0].lat;
+            item.longitude = loc.data[0].lon;
+            console.log(url);
+            console.log(count, "times you tried, and succed!");
+            break;
+          } catch (e) {
+            if (++count == maxTries)
+              console.log(e, maxTries, "times tried, but failed!");
+          }
+        }
 
         this.json_array[i] = item;
         this.json_array = [...this.json_array];
