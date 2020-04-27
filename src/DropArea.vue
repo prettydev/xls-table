@@ -8,29 +8,11 @@
         @drop="drop"
         @click="rectClick"
       >
-        <div v-if="loading" class="loading">...loading</div>
-        <table v-if="!loading">
+        <table>
           <tbody>
             <th v-for="(header, key) in headers" :key="'th' + key">{{ header }}</th>
             <tr v-for="(item, key) in json_array" :key="'tr' + key">
-              <td v-for="(header, ikey) in headers" :key="'td' + ikey">
-                <div v-if="header !== 'location'">{{ item[header] }}</div>
-                <div v-if="header === 'location'">
-                  <table>
-                    <tbody>
-                      <th>latitude</th>
-                      <th>longitude</th>
-                      <tr v-if="item[header] === undefined || item[header].length === 0">
-                        <td colspan="2" style="text-align:center;font-weight:bold">no result</td>
-                      </tr>
-                      <tr v-for="(loc, k) in item[header]" :key="k">
-                        <td>{{ loc.lat }}</td>
-                        <td>{{ loc.lon }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </td>
+              <td v-for="(header, ikey) in headers" :key="'td' + ikey">{{ item[header] }}</td>
             </tr>
           </tbody>
         </table>
@@ -63,7 +45,6 @@ export default {
   delimiters: ["${", "}"],
   data: function() {
     return {
-      loading: false,
       file: {},
       json_array: [
         {
@@ -73,8 +54,7 @@ export default {
           Zip: 12203,
           Name: "Apple Store Cross Gates",
           Phone: "(518) 869-3192",
-          Group: "Example Group 1",
-          URL: "http://www.apple.com/retail/crossgates/"
+          Group: "Example Group 1"
         },
         {
           Address: "Duke Rd & Walden Ave",
@@ -83,8 +63,7 @@ export default {
           Zip: 14225,
           Name: "Apple Store Walden Galleria",
           Phone: "(716) 685-2762",
-          Group: "Example Group 2",
-          URL: "http://www.apple.com/retail/walden/"
+          Group: "Example Group 2"
         },
         {
           Address: "630 Old Country Rd.",
@@ -93,8 +72,7 @@ export default {
           Zip: 11530,
           Name: "Apple Store Roosevelt Field",
           Phone: "(516) 248-3347",
-          Group: "Example Group 3",
-          URL: "http://www.apple.com/retail/rooseveltfield/"
+          Group: "Example Group 3"
         },
         {
           Address: "160 Walt Whitman Rd.",
@@ -103,8 +81,7 @@ export default {
           Zip: 11746,
           Name: "Apple Store Walt Whitman",
           Phone: "(631) 425-1563",
-          Group: "Example Group 3",
-          URL: "http://www.apple.com/retail/waltwhitman/"
+          Group: "Example Group 3"
         },
         {
           Address: "9553 Carousel Center Drive",
@@ -113,8 +90,7 @@ export default {
           Zip: 13290,
           Name: "Apple Store Carousel",
           Phone: "(315) 422-8484",
-          Group: "Example Group 2",
-          URL: "http://www.apple.com/retail/carousel/"
+          Group: "Example Group 2"
         },
         {
           Address: "2655 Richmond Ave",
@@ -123,8 +99,7 @@ export default {
           Zip: 10314,
           Name: "Apple Store Staten Island",
           Phone: "(718) 477-4180",
-          Group: "Example Group 1",
-          URL: "http://www.apple.com/retail/statenisland/"
+          Group: "Example Group 1"
         },
         {
           Address: "7979 Victor Road",
@@ -133,8 +108,7 @@ export default {
           Zip: 14564,
           Name: "Apple Store Eastview",
           Phone: "(585) 421-3030",
-          Group: "Example Group 1",
-          URL: "http://www.apple.com/retail/eastview/"
+          Group: "Example Group 1"
         },
         {
           Address: "1591 Palisades Center Drive",
@@ -143,8 +117,7 @@ export default {
           Zip: 10994,
           Name: "Apple Store Palisades",
           Phone: "(845) 353-6756",
-          Group: "Example Group 2",
-          URL: "http://www.apple.com/retail/palisades/"
+          Group: "Example Group 2"
         },
         {
           Address: "125 Westchester Ave.",
@@ -153,8 +126,7 @@ export default {
           Zip: 10601,
           Name: "Apple Store The Westchester",
           Phone: "(914) 428-1877",
-          Group: "Example Group 3",
-          URL: "http://www.apple.com/retail/thewestchester/"
+          Group: "Example Group 3"
         },
         {
           Address: "103 Prince Street",
@@ -163,8 +135,7 @@ export default {
           Zip: 10012,
           Name: "Apple Store SoHo",
           Phone: "(212) 226-3126",
-          Group: "Example Group 2",
-          URL: "http://www.apple.com/retail/soho/"
+          Group: "Example Group 2"
         }
       ],
       headers: [
@@ -175,8 +146,8 @@ export default {
         "Name",
         "Phone",
         "Group",
-        "URL",
-        "location"
+        "latitude",
+        "longitude"
       ],
       csv_data: ""
     };
@@ -205,13 +176,7 @@ export default {
         headers.push(hdr);
       }
 
-      this.headers = [...headers, "location"];
-    },
-    getJsonHeaders() {
-      this.headers = [];
-      for (let obj of Object.entries(this.json_array[0])) {
-        this.headers.push(obj[0]);
-      }
+      this.headers = [...headers, "latitude", "longitude"];
     },
     onChange() {
       this.file = this.$refs.file.files[0];
@@ -229,33 +194,44 @@ export default {
       reader.readAsArrayBuffer(this.file);
     },
     async callApi() {
-      this.loading = true;
-      console.log("start call");
-      for (let item of this.json_array) {
+      let json_array_tmp = [...this.json_array];
+      this.headers = [...this.headers, "latitude", "longitude"];
+      this.headers.splice(0, this.headers.length, ...new Set(this.headers));
+
+      for (let i = 0; i < json_array_tmp.length; i++) {
+        let item = this.json_array[i];
         let item_tmp = "";
         for (let obj of Object.entries(item)) {
-          item_tmp += `${obj[1]} `;
+          if (!obj) continue;
+          if (
+            obj[0].toString().toLowerCase() === "address" ||
+            obj[0].toString().toLowerCase() === "state" ||
+            obj[0].toString().toLowerCase() === "city" ||
+            obj[0].toString().toLowerCase() === "zip"
+          )
+            item_tmp += `${obj[1]} `;
         }
 
-        item.location = await new Promise(resolve => {
+        let loc = await new Promise(resolve => {
           setTimeout(async () => {
             try {
               let url =
                 "https://us1.locationiq.com/v1/search.php?key=pk.5583d733f08dd889b77df42f1d00337a&format=json&q=" +
                 item_tmp;
               let res = await axios.get(url);
-              item.location = res.data;
-              resolve(item.location);
+              resolve({ lat: res.data[0].lat, lon: res.data[0].lon });
+              console.log(url);
             } catch (e) {
-              resolve([]);
+              resolve({ lat: 0, lon: 0 });
             }
           }, 200);
         });
+        item.latitude = loc.lat;
+        item.longitude = loc.lon;
+
+        this.json_array[i] = item;
+        this.json_array = [...this.json_array];
       }
-      console.log("aaaaaaaaaaaaaaaaa");
-      this.getJsonHeaders();
-      this.loading = false;
-      console.log("end call");
     },
     dragOver(event) {
       event.preventDefault();
@@ -291,9 +267,9 @@ export default {
       }
     },
     rectClick() {
-      this.showCSVArea();
-      this.$refs.csvarea.focus();
-      this.$refs.csvarea.select();
+      // this.showCSVArea();
+      // this.$refs.csvarea.focus();
+      // this.$refs.csvarea.select();
     },
     showCSVArea() {
       document.querySelector(".csv-area").style.display = "";
@@ -348,11 +324,6 @@ export default {
       }
       th {
         border-bottom: 1px red solid;
-      }
-      .loading {
-        font-weight: bold;
-        font-size: 30;
-        padding-top: 100px;
       }
     }
     .csv-area {
