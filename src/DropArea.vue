@@ -1,27 +1,6 @@
 <template>
   <div id="drop-area">
-    <div class="drop-area">
-      <div
-        class="common table-div"
-        @dragover="dragOver"
-        @dragleave="dragLeave"
-        @drop="drop"
-        @click="rectClick"
-      >
-        <table>
-          <tbody>
-            <th v-for="(header, key) in headers" :key="'th' + key">{{ header }}</th>
-            <tr v-for="(item, key) in json_array" :key="'tr' + key">
-              <td v-for="(header, ikey) in headers" :key="'td' + ikey">{{ item[header] }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="common csv-area">
-        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
-      </div>
-    </div>
-    <div>
+    <div class="control-area">
       <input
         type="file"
         name="fields[assetsFieldHandle][]"
@@ -31,6 +10,22 @@
         accept=".xls, .xlsx, .csv"
       />
       <button @click="callApi">call api</button>
+    </div>
+    <div @dragover="dragOver" @dragleave="dragLeave" @drop="drop" class="drop-rect"></div>
+    <div class="drop-area">
+      <div class="common table-div" @click="rectClick">
+        <table>
+          <th v-for="(header, key) in headers" :key="'th' + key">{{ header }}</th>
+          <tr v-for="(item, key) in json_array" :key="'tr' + key">
+            <td v-for="(header, ikey) in headers" :key="'td' + ikey">
+              <input type="text" v-model="item[header]" class="edit_cell" />
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="common csv-area">
+        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
+      </div>
     </div>
   </div>
 </template>
@@ -229,8 +224,7 @@ export default {
 
             item.latitude = loc.data[0].lat;
             item.longitude = loc.data[0].lon;
-            console.log(url);
-            console.log(count, "times you tried, and succed!");
+            // console.log(url);
             break;
           } catch (e) {
             if (++count == maxTries)
@@ -257,10 +251,10 @@ export default {
       this.onChange();
     },
     showEffect() {
-      document.querySelector(".table-div").style.border = "3px green solid";
+      document.querySelector(".drop-rect").style.border = "3px green dashed";
     },
     resetEffect() {
-      document.querySelector(".table-div").style.border = "1px gray solid";
+      document.querySelector(".drop-rect").style.border = "1px gray dashed";
     },
     onPaste(event) {
       this.csv_data = event.target.value;
@@ -295,27 +289,39 @@ export default {
 }
 #drop-area {
   display: flex;
-  justify-content: center;
-  input {
-    padding-top: 70px;
+  flex-direction: column;
+  .drop-area,
+  .drop-rect,
+  .control-area {
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  .control-area {
+    padding-bottom: 30px;
+    padding-top: 50px;
+  }
+  .drop-rect {
+    border: gray 1px dashed;
+    width: 90%;
+    height: 100px;
+    &:hover {
+      border: 3px green dashed;
+    }
   }
   .drop-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: auto;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    position: absolute;
     width: 90%;
-    height: 70%;
+    height: 75%;
+    padding-top: 30px;
     .common {
       width: 100%;
       height: 100%;
-      position: absolute;
     }
     .table-div {
       overflow: auto;
@@ -323,16 +329,18 @@ export default {
       border-radius: 5px;
       border: 1px gray solid;
       display: flex;
-      -moz-box-shadow: inset 0 0 10px #666;
-      -webkit-box-shadow: inset 0 0 10px #666;
-      box-shadow: inset 0 0 10px #666;
-      display: flex;
       justify-content: center;
-      &:hover {
-        border: 3px green solid;
+      td {
+        border-bottom: 0;
+        margin: 0;
+        padding: 0;
+        input {
+          padding: 5;
+          margin: 0;
+        }
       }
       th {
-        border-bottom: 1px red solid;
+        border: 1px gray solid;
       }
     }
     .csv-area {
