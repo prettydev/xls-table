@@ -18,27 +18,112 @@
       class="drop-rect"
     ></div>
     <div class="drop-area">
-      <v-data-table :headers="headers" :items="json_array" class="elevation-1">
-        <template slot="headerCell" slot-scope="props">
-          <v-tooltip bottom>
-            <span slot="activator">
-              {{ props.header.text }}
-            </span>
-            <span>
-              {{ props.header.text }}
-            </span>
-          </v-tooltip>
+      <v-data-table :headers="headers" :items="json_array">
+        <template v-slot:item.name="props">
+          <v-edit-dialog
+            :return-value.sync="props.item.name"
+            @save="save"
+            @cancel="cancel"
+            @open="open"
+            @close="close"
+          >
+            {{ props.item.name }}
+            <template v-slot:input>
+              <v-text-field
+                v-model="props.item.name"
+                :rules="[max25chars]"
+                label="Edit"
+                single-line
+                counter
+              ></v-text-field>
+            </template>
+          </v-edit-dialog>
         </template>
-        <template slot="items" slot-scope="props">
-          <td class="text-xs-right">{{ props.item.name }}</td>
-          <td class="text-xs-right">{{ props.item.address }}</td>
-          <td class="text-xs-right">{{ props.item.city }}</td>
-          <td class="text-xs-right">{{ props.item.state }}</td>
-          <td class="text-xs-right">{{ props.item.zip }}</td>
-          <td class="text-xs-right">{{ props.item.lat }}</td>
-          <td class="text-xs-right">{{ props.item.lng }}</td>
+        <template v-slot:item.address="props">
+          <v-edit-dialog
+            :return-value.sync="props.item.address"
+            @save="save"
+            @cancel="cancel"
+            @open="open"
+            @close="close"
+          >
+            {{ props.item.address }}
+            <template v-slot:input>
+              <v-text-field
+                v-model="props.item.address"
+                :rules="[max25chars]"
+                label="Edit"
+                single-line
+                counter
+              ></v-text-field>
+            </template>
+          </v-edit-dialog>
+        </template>
+        <template v-slot:item.city="props">
+          <v-edit-dialog
+            :return-value.sync="props.item.city"
+            @save="save"
+            @cancel="cancel"
+            @open="open"
+            @close="close"
+          >
+            {{ props.item.city }}
+            <template v-slot:input>
+              <v-text-field
+                v-model="props.item.city"
+                :rules="[max25chars]"
+                label="Edit"
+                single-line
+                counter
+              ></v-text-field>
+            </template>
+          </v-edit-dialog>
+        </template>
+        <template v-slot:item.state="props">
+          <v-edit-dialog
+            :return-value.sync="props.item.state"
+            @save="save"
+            @cancel="cancel"
+            @open="open"
+            @close="close"
+          >
+            {{ props.item.state }}
+            <template v-slot:input>
+              <v-text-field
+                v-model="props.item.state"
+                :rules="[max25chars]"
+                label="Edit"
+                single-line
+                counter
+              ></v-text-field>
+            </template>
+          </v-edit-dialog>
+        </template>
+        <template v-slot:item.zip="props">
+          <v-edit-dialog
+            :return-value.sync="props.item.zip"
+            @save="save"
+            @cancel="cancel"
+            @open="open"
+            @close="close"
+          >
+            {{ props.item.zip }}
+            <template v-slot:input>
+              <v-text-field
+                v-model="props.item.zip"
+                :rules="[max25chars]"
+                label="Edit"
+                single-line
+                counter
+              ></v-text-field>
+            </template>
+          </v-edit-dialog>
         </template>
       </v-data-table>
+      <v-snackbar v-model="snack" :timeout="3000" :color="snackColor">
+        {{ snackText }}
+        <v-btn text @click="snack = false">Close</v-btn>
+      </v-snackbar>
     </div>
     <div class="common csv-area">
       <textarea
@@ -58,10 +143,15 @@ import { Parser } from "json2csv";
 import axios from "axios";
 
 export default {
-  name: "DropArea",
+  name: "SeparatedArea",
   delimiters: ["${", "}"],
   data: function() {
     return {
+      snack: false,
+      snackColor: "",
+      snackText: "",
+      max25chars: (v) => v.length <= 25 || "Input too long!",
+      pagination: {},
       file: {},
       json_array: [],
       headers: [
@@ -70,14 +160,14 @@ export default {
           sortable: false,
           text: "Name",
           value: "name",
-          width: "5%",
+          width: "15%",
         },
         {
           align: "center",
           sortable: false,
           text: "Address",
           value: "address",
-          width: "25%",
+          width: "30%",
         },
         {
           align: "center",
@@ -91,14 +181,14 @@ export default {
           sortable: false,
           text: "State",
           value: "state",
-          width: "5%",
+          width: "1%",
         },
         {
           align: "center",
           sortable: false,
           text: "Zip",
           value: "zip",
-          width: "5%",
+          width: "1%",
         },
         {
           align: "center",
@@ -269,6 +359,29 @@ export default {
     hideCSVArea() {
       document.querySelector(".csv-area").style.display = "none";
     },
+    save() {
+      this.snack = true;
+      this.snackColor = "success";
+      this.snackText = "Data saved";
+    },
+    cancel() {
+      this.snack = true;
+      this.snackColor = "error";
+      this.snackText = "Canceled";
+    },
+    open() {
+      this.snack = true;
+      this.snackColor = "info";
+      this.snackText = "Dialog opened";
+    },
+    close() {
+      console.log("Dialog closed");
+    },
+  },
+  computed: {
+    saleables: function() {
+      return this.$store.getters["saleables/items"];
+    },
   },
 };
 </script>
@@ -294,7 +407,7 @@ export default {
   }
   .drop-rect {
     border: gray 1px dashed;
-    width: 50%;
+    width: 70%;
     height: 100px;
     &:hover {
       border: 3px green dashed;
@@ -305,7 +418,7 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 90%;
+    width: 100%;
     height: 75%;
     padding-top: 30px;
     .common {
@@ -327,14 +440,6 @@ export default {
           padding: 5;
           margin: 0;
         }
-      }
-      th.active {
-        text-align: center;
-        border: 1px gray solid;
-      }
-      th.error {
-        text-align: center;
-        border: 0; //1px gray solid;
       }
     }
     .csv-area {
