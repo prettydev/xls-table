@@ -9,33 +9,48 @@
         ref="file"
         accept=".xls, .xlsx, .csv"
       />
-      <button @click="callApi">call api</button>
+      <v-btn small color="primary" @click="callApi">call api</v-btn>
     </div>
-    <div @dragover="dragOver" @dragleave="dragLeave" @drop="drop" class="drop-rect"></div>
+    <div
+      @dragover="dragOver"
+      @dragleave="dragLeave"
+      @drop="drop"
+      class="drop-rect"
+    ></div>
     <div class="drop-area">
-      <div class="common table-div" @click="rectClick">
-        <table>
-          <th
-            :class="[headers.length>6?'active':'error']"
-            v-for="(header, key) in headers"
-            :key="'th' + key"
-          >{{ header }}</th>
-          <tbody v-if="headers.length>6">
-            <tr v-for="(item, key) in json_array" :key="'tr' + key">
-              <td v-for="(header, ikey) in headers" :key="'td' + ikey">
-                <input type="text" v-model="item[header]" class="edit_cell" />
-              </td>
-            </tr>
-          </tbody>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="common csv-area">
-        <textarea @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
-      </div>
+      <v-data-table :headers="headers" :items="json_array" class="elevation-1">
+        <template slot="headerCell" slot-scope="props">
+          <v-tooltip bottom>
+            <span slot="activator">
+              {{ props.header.text }}
+            </span>
+            <span>
+              {{ props.header.text }}
+            </span>
+          </v-tooltip>
+        </template>
+        <template slot="items" slot-scope="props">
+          <td class="text-xs-right">{{ props.item.name }}</td>
+          <td class="text-xs-right">{{ props.item.address }}</td>
+          <td class="text-xs-right">{{ props.item.city }}</td>
+          <td class="text-xs-right">{{ props.item.state }}</td>
+          <td class="text-xs-right">{{ props.item.zip }}</td>
+          <td class="text-xs-right">{{ props.item.lat }}</td>
+          <td class="text-xs-right">{{ props.item.lng }}</td>
+        </template>
+      </v-data-table>
+    </div>
+    <div class="common csv-area">
+      <textarea
+        @paste="onPaste"
+        @blur="onBlur"
+        v-model="csv_data"
+        ref="csvarea"
+      ></textarea>
     </div>
   </div>
 </template>
+
 <script>
 import XLSX from "xlsx";
 import csv2json from "csvjson-csv2json";
@@ -49,8 +64,58 @@ export default {
     return {
       file: {},
       json_array: [],
-      headers: ["Name", "Address", "City", "State", "Zip", "Lat", "Lng"],
-      csv_data: ""
+      headers: [
+        {
+          align: "center",
+          sortable: false,
+          text: "Name",
+          value: "name",
+          width: "5%",
+        },
+        {
+          align: "center",
+          sortable: false,
+          text: "Address",
+          value: "address",
+          width: "25%",
+        },
+        {
+          align: "center",
+          sortable: false,
+          text: "City",
+          value: "city",
+          width: "10%",
+        },
+        {
+          align: "center",
+          sortable: false,
+          text: "State",
+          value: "state",
+          width: "5%",
+        },
+        {
+          align: "center",
+          sortable: false,
+          text: "Zip",
+          value: "zip",
+          width: "5%",
+        },
+        {
+          align: "center",
+          sortable: false,
+          text: "Lat",
+          value: "lat",
+          width: "10%",
+        },
+        {
+          align: "center",
+          sortable: false,
+          text: "Lng",
+          value: "lng",
+          width: "10%",
+        },
+      ],
+      csv_data: "",
     };
   },
   mounted: function() {
@@ -60,46 +125,62 @@ export default {
   },
   methods: {
     getSheetHeader(sheet) {
-      var headers = [];
-      var range = XLSX.utils.decode_range(sheet["!ref"]);
-      var C,
+      let headers = [];
+      let range = XLSX.utils.decode_range(sheet["!ref"]);
+      let C,
         R = range.s.r; /* start in the first row */
       /* walk every column in the range */
       for (C = range.s.c; C <= range.e.c; ++C) {
-        var cell =
+        let cell =
           sheet[
             XLSX.utils.encode_cell({ c: C, r: R })
           ]; /* find the cell in the first row */
 
-        var hdr = "UNKNOWN " + C; // <-- replace with your desired default
+        let hdr = "UNKNOWN " + C; // <-- replace with your desired default
         if (cell && cell.t) hdr = XLSX.utils.format_cell(cell);
 
         headers.push(hdr);
       }
 
-      if (this.headers.length < 5)
-        this.headers = [...headers, "latitude", "longitude"];
-      else this.headers = ["error"];
+      this.headers = [...headers, "Lat", "Lng"];
     },
     onChange() {
       this.file = this.$refs.file.files[0];
       let self = this;
-      var reader = new FileReader();
+      let reader = new FileReader();
       reader.onload = async function(e) {
-        var data = new Uint8Array(e.target.result);
-        var workbook = XLSX.read(data, { type: "array" });
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, { type: "array" });
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
-        self.json_array = await XLSX.utils.sheet_to_json(worksheet);
+        let tmp = await XLSX.utils.sheet_to_json(worksheet);
+        self.json_array = await self.convertKeysToLowerCase(tmp);
         self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
-        self.getSheetHeader(worksheet);
+        // self.getSheetHeader(worksheet);
       };
       reader.readAsArrayBuffer(this.file);
     },
+    convertKeysToLowerCase(arr) {
+      let output = [];
+      for (let i = 0; i < arr.length; i++) {
+        let tmp = {};
+        for (let obj of Object.entries(arr[i])) {
+          if (!obj) continue;
+          let key = obj[0].toString().toLowerCase();
+          let val = obj[1].toString();
+          tmp[key] = val;
+        }
+        output.push(tmp);
+      }
+
+      console.log(output, "===output");
+
+      return output;
+    },
     async callApi() {
       let json_array_tmp = [...this.json_array];
-      this.headers = [...this.headers, "latitude", "longitude"];
-      this.headers.splice(0, this.headers.length, ...new Set(this.headers));
+      // this.headers = [...this.headers, "Lat", "Lng"];
+      // this.headers.splice(0, this.headers.length, ...new Set(this.headers));
 
       for (let i = 0; i < json_array_tmp.length; i++) {
         let item = this.json_array[i];
@@ -130,8 +211,8 @@ export default {
 
             let loc = await axios.get(url);
 
-            item.latitude = loc.data[0].lat;
-            item.longitude = loc.data[0].lon;
+            item.lat = loc.data[0].lat;
+            item.lng = loc.data[0].lon;
             // console.log(url);
             break;
           } catch (e) {
@@ -171,7 +252,7 @@ export default {
       this.hideCSVArea();
       try {
         this.json_array = await csv2json(event.target.value, {
-          parseNumbers: true
+          parseNumbers: true,
         });
       } catch (e) {
         console.log(e);
@@ -187,8 +268,8 @@ export default {
     },
     hideCSVArea() {
       document.querySelector(".csv-area").style.display = "none";
-    }
-  }
+    },
+  },
 };
 </script>
 <style lang="scss">
@@ -213,7 +294,7 @@ export default {
   }
   .drop-rect {
     border: gray 1px dashed;
-    width: 90%;
+    width: 50%;
     height: 100px;
     &:hover {
       border: 3px green dashed;
