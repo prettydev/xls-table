@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <DropArea />
+    <SeparatedArea />
   </div>
 </template>
 
 <script>
-import DropArea from "./DropArea";
+import SeparatedArea from "./SeparatedArea";
 
 export default {
   name: "App",
   components: {
-    DropArea,
-  },
+    SeparatedArea
+  }
 };
 </script>

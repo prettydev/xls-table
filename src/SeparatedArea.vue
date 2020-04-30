@@ -15,12 +15,19 @@
     <div class="drop-area">
       <div class="common table-div" @click="rectClick">
         <table>
-          <th v-for="(header, key) in headers" :key="'th' + key">{{ header }}</th>
-          <tr v-for="(item, key) in json_array" :key="'tr' + key">
-            <td v-for="(header, ikey) in headers" :key="'td' + ikey">
-              <input type="text" v-model="item[header]" class="edit_cell" />
-            </td>
-          </tr>
+          <th
+            :class="[headers.length>6?'active':'error']"
+            v-for="(header, key) in headers"
+            :key="'th' + key"
+          >{{ header }}</th>
+          <tbody v-if="headers.length>6">
+            <tr v-for="(item, key) in json_array" :key="'tr' + key">
+              <td v-for="(header, ikey) in headers" :key="'td' + ikey">
+                <input type="text" v-model="item[header]" class="edit_cell" />
+              </td>
+            </tr>
+          </tbody>
+          <tbody></tbody>
         </table>
       </div>
       <div class="common csv-area">
@@ -41,109 +48,8 @@ export default {
   data: function() {
     return {
       file: {},
-      json_array: [
-        {
-          Address: "Crossgates Mall Road",
-          City: "Albany",
-          State: "NY",
-          Zip: 12203,
-          Name: "Apple Store Cross Gates",
-          Phone: "(518) 869-3192",
-          Group: "Example Group 1"
-        },
-        {
-          Address: "Duke Rd & Walden Ave",
-          City: "Buffalo",
-          State: "NY",
-          Zip: 14225,
-          Name: "Apple Store Walden Galleria",
-          Phone: "(716) 685-2762",
-          Group: "Example Group 2"
-        },
-        {
-          Address: "630 Old Country Rd.",
-          City: "Garden City",
-          State: "NY",
-          Zip: 11530,
-          Name: "Apple Store Roosevelt Field",
-          Phone: "(516) 248-3347",
-          Group: "Example Group 3"
-        },
-        {
-          Address: "160 Walt Whitman Rd.",
-          City: "Huntington Station",
-          State: "NY",
-          Zip: 11746,
-          Name: "Apple Store Walt Whitman",
-          Phone: "(631) 425-1563",
-          Group: "Example Group 3"
-        },
-        {
-          Address: "9553 Carousel Center Drive",
-          City: "Syracuse",
-          State: "NY",
-          Zip: 13290,
-          Name: "Apple Store Carousel",
-          Phone: "(315) 422-8484",
-          Group: "Example Group 2"
-        },
-        {
-          Address: "2655 Richmond Ave",
-          City: "Staten Island",
-          State: "NY",
-          Zip: 10314,
-          Name: "Apple Store Staten Island",
-          Phone: "(718) 477-4180",
-          Group: "Example Group 1"
-        },
-        {
-          Address: "7979 Victor Road",
-          City: "Victor",
-          State: "NY",
-          Zip: 14564,
-          Name: "Apple Store Eastview",
-          Phone: "(585) 421-3030",
-          Group: "Example Group 1"
-        },
-        {
-          Address: "1591 Palisades Center Drive",
-          City: "West Nyack",
-          State: "NY",
-          Zip: 10994,
-          Name: "Apple Store Palisades",
-          Phone: "(845) 353-6756",
-          Group: "Example Group 2"
-        },
-        {
-          Address: "125 Westchester Ave.",
-          City: "White Plains",
-          State: "NY",
-          Zip: 10601,
-          Name: "Apple Store The Westchester",
-          Phone: "(914) 428-1877",
-          Group: "Example Group 3"
-        },
-        {
-          Address: "103 Prince Street",
-          City: "New York",
-          State: "NY",
-          Zip: 10012,
-          Name: "Apple Store SoHo",
-          Phone: "(212) 226-3126",
-          Group: "Example Group 2"
-        }
-      ],
-      headers: [
-        "Address",
-        "City",
-        "State",
-        "Zip",
-        "Name",
-        "Phone",
-        "Group",
-        "latitude",
-        "longitude"
-      ],
+      json_array: [],
+      headers: ["Name", "Address", "City", "State", "Zip", "Lat", "Lng"],
       csv_data: ""
     };
   },
@@ -171,7 +77,9 @@ export default {
         headers.push(hdr);
       }
 
-      this.headers = [...headers, "latitude", "longitude"];
+      if (this.headers.length < 5)
+        this.headers = [...headers, "latitude", "longitude"];
+      else this.headers = ["error"];
     },
     onChange() {
       this.file = this.$refs.file.files[0];
@@ -339,8 +247,13 @@ export default {
           margin: 0;
         }
       }
-      th {
+      th.active {
+        text-align: center;
         border: 1px gray solid;
+      }
+      th.error {
+        text-align: center;
+        border: 0; //1px gray solid;
       }
     }
     .csv-area {
