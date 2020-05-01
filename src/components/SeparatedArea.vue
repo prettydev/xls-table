@@ -11,12 +11,23 @@
       />
       <v-btn small color="primary" @click="callApi">call api</v-btn>
     </div>
-    <div
+    <!-- <div
       @dragover="dragOver"
       @dragleave="dragLeave"
       @drop="drop"
       class="drop-rect"
-    ></div>
+    ></div> -->
+
+    <textarea
+      class="csv-area drop-rect"
+      @dragover="dragOver"
+      @dragleave="dragLeave"
+      @drop="drop"
+      @paste="onPaste"
+      @blur="onBlur"
+      v-model="csv_data"
+      ref="csvarea"
+    ></textarea>
     <div class="drop-area">
       <v-data-table :headers="headers" :items="json_array">
         <template v-slot:item.name="props">
@@ -125,14 +136,6 @@
         <v-btn text @click="snack = false">Close</v-btn>
       </v-snackbar>
     </div>
-    <div class="common csv-area">
-      <textarea
-        @paste="onPaste"
-        @blur="onBlur"
-        v-model="csv_data"
-        ref="csvarea"
-      ></textarea>
-    </div>
   </div>
 </template>
 
@@ -160,7 +163,7 @@ export default {
           sortable: false,
           text: "Name",
           value: "name",
-          width: "15%",
+          width: "25%",
         },
         {
           align: "center",
@@ -209,30 +212,18 @@ export default {
     };
   },
   mounted: function() {
-    this.hideCSVArea();
     const json2csvParser = new Parser();
     this.csv_data = json2csvParser.parse(this.json_array);
   },
   methods: {
     getSheetHeader(sheet) {
-      let headers = [];
+      let columns = 0;
       let range = XLSX.utils.decode_range(sheet["!ref"]);
-      let C,
-        R = range.s.r; /* start in the first row */
-      /* walk every column in the range */
-      for (C = range.s.c; C <= range.e.c; ++C) {
-        let cell =
-          sheet[
-            XLSX.utils.encode_cell({ c: C, r: R })
-          ]; /* find the cell in the first row */
 
-        let hdr = "UNKNOWN " + C; // <-- replace with your desired default
-        if (cell && cell.t) hdr = XLSX.utils.format_cell(cell);
-
-        headers.push(hdr);
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        columns++;
       }
-
-      this.headers = [...headers, "Lat", "Lng"];
+      return columns;
     },
     onChange() {
       this.file = this.$refs.file.files[0];
@@ -243,10 +234,14 @@ export default {
         let workbook = XLSX.read(data, { type: "array" });
         let sheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[sheetName];
-        let tmp = await XLSX.utils.sheet_to_json(worksheet);
-        self.json_array = await self.convertKeysToLowerCase(tmp);
-        self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
-        // self.getSheetHeader(worksheet);
+
+        let columns = self.getSheetHeader(worksheet);
+
+        if (columns > 4) {
+          let tmp = await XLSX.utils.sheet_to_json(worksheet);
+          self.json_array = await self.convertKeysToLowerCase(tmp);
+          self.csv_data = await XLSX.utils.sheet_to_csv(worksheet);
+        }
       };
       reader.readAsArrayBuffer(this.file);
     },
@@ -339,25 +334,24 @@ export default {
       this.csv_data = event.target.value;
     },
     async onBlur(event) {
-      this.hideCSVArea();
       try {
-        this.json_array = await csv2json(event.target.value, {
+        let tmp_array = await csv2json(event.target.value, {
           parseNumbers: true,
         });
+        let tmp = tmp_array[0];
+        if (Object.entries(tmp).length < 5) {
+          this.json_array = [];
+          console.log("csv data must be 5 columns...");
+        } else {
+          this.json_array = await this.convertKeysToLowerCase(tmp_array);
+        }
       } catch (e) {
-        console.log(e);
+        console.log("onBlur exception", e);
       }
     },
     rectClick() {
-      // this.showCSVArea();
-      // this.$refs.csvarea.focus();
-      // this.$refs.csvarea.select();
-    },
-    showCSVArea() {
-      document.querySelector(".csv-area").style.display = "";
-    },
-    hideCSVArea() {
-      document.querySelector(".csv-area").style.display = "none";
+      this.$refs.csvarea.focus();
+      this.$refs.csvarea.select();
     },
     save() {
       this.snack = true;
@@ -421,10 +415,6 @@ export default {
     width: 100%;
     height: 75%;
     padding-top: 30px;
-    .common {
-      width: 100%;
-      height: 100%;
-    }
     .table-div {
       overflow: auto;
       background: white;
