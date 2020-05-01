@@ -257,8 +257,6 @@ export default {
         output.push(tmp);
       }
 
-      console.log(output, "===output");
-
       return output;
     },
     async callApi() {
