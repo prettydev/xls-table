@@ -11,23 +11,21 @@
       />
       <v-btn small color="primary" @click="callApi">call api</v-btn>
     </div>
-    <!-- <div
-      @dragover="dragOver"
-      @dragleave="dragLeave"
-      @drop="drop"
+    <div
       class="drop-rect"
-    ></div> -->
-
-    <textarea
-      class="csv-area drop-rect"
       @dragover="dragOver"
       @dragleave="dragLeave"
       @drop="drop"
-      @paste="onPaste"
-      @blur="onBlur"
-      v-model="csv_data"
-      ref="csvarea"
-    ></textarea>
+      @click="rectClick"
+    >
+      <textarea
+        class="csv-area"
+        @paste="onPaste"
+        @blur="onBlur"
+        v-model="csv_data"
+        ref="csvarea"
+      ></textarea>
+    </div>
     <div class="drop-area">
       <v-data-table :headers="headers" :items="json_array">
         <template v-slot:item.name="props">
@@ -212,6 +210,7 @@ export default {
     };
   },
   mounted: function() {
+    this.$refs.csvarea.style.display = "none";
     const json2csvParser = new Parser();
     this.csv_data = json2csvParser.parse(this.json_array);
   },
@@ -301,7 +300,7 @@ export default {
             // console.log(url);
             break;
           } catch (e) {
-            if (++count == maxTries)
+            if (++count === maxTries)
               console.log(e, maxTries, "times tried, but failed!");
           }
         }
@@ -347,9 +346,14 @@ export default {
         }
       } catch (e) {
         console.log("onBlur exception", e);
+      } finally {
+        this.$refs.csvarea.style.display = "none";
       }
     },
     rectClick() {
+      this.$refs.csvarea.style.display = "";
+      this.$refs.csvarea.style.width = "100%";
+      this.$refs.csvarea.style.height = "100%";
       this.$refs.csvarea.focus();
       this.$refs.csvarea.select();
     },
@@ -432,10 +436,8 @@ export default {
         }
       }
     }
-    .csv-area {
-      textarea {
-        width: 100%;
-        height: 100%;
+    .drop-rect {
+      text-area.csv-area {
         &:focus {
           background: white;
         }
