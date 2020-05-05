@@ -18,16 +18,15 @@
       @drop="drop"
       @click="rectClick"
     >
-      <textarea
-        class="csv-area"
-        @paste="onPaste"
-        @blur="onBlur"
-        v-model="csv_data"
-        ref="csvarea"
-      ></textarea>
+      <textarea class="csv-area" @paste="onPaste" @blur="onBlur" v-model="csv_data" ref="csvarea"></textarea>
     </div>
     <div class="drop-area">
-      <v-data-table :headers="headers" :items="json_array">
+      <v-data-table
+        :headers="headers"
+        :items="json_array"
+        :pagination.sync="pagination"
+        class="elevation-1"
+      >
         <template v-slot:item.name="props">
           <v-edit-dialog
             :return-value.sync="props.item.name"
@@ -151,8 +150,13 @@ export default {
       snack: false,
       snackColor: "",
       snackText: "",
-      max25chars: (v) => v.length <= 25 || "Input too long!",
-      pagination: {},
+      max25chars: v => v.length <= 25 || "Input too long!",
+      pagination: {
+        ascending: true,
+        sortBy: "name",
+        rowsPerPage: 5,
+        page: 1
+      },
       file: {},
       json_array: [],
       headers: [
@@ -161,52 +165,52 @@ export default {
           sortable: false,
           text: "Name",
           value: "name",
-          width: "25%",
+          width: "25%"
         },
         {
           align: "center",
           sortable: false,
           text: "Address",
           value: "address",
-          width: "30%",
+          width: "30%"
         },
         {
           align: "center",
           sortable: false,
           text: "City",
           value: "city",
-          width: "10%",
+          width: "10%"
         },
         {
           align: "center",
           sortable: false,
           text: "State",
           value: "state",
-          width: "1%",
+          width: "1%"
         },
         {
           align: "center",
           sortable: false,
           text: "Zip",
           value: "zip",
-          width: "1%",
+          width: "1%"
         },
         {
           align: "center",
           sortable: false,
           text: "Lat",
           value: "lat",
-          width: "10%",
+          width: "10%"
         },
         {
           align: "center",
           sortable: false,
           text: "Lng",
           value: "lng",
-          width: "10%",
-        },
+          width: "10%"
+        }
       ],
-      csv_data: "",
+      csv_data: ""
     };
   },
   mounted: function() {
@@ -333,7 +337,7 @@ export default {
     async onBlur(event) {
       try {
         let tmp_array = await csv2json(event.target.value, {
-          parseNumbers: true,
+          parseNumbers: true
         });
         let tmp = tmp_array[0];
         if (Object.entries(tmp).length < 5) {
@@ -372,13 +376,13 @@ export default {
     },
     close() {
       console.log("Dialog closed");
-    },
+    }
   },
   computed: {
     saleables: function() {
       return this.$store.getters["saleables/items"];
-    },
-  },
+    }
+  }
 };
 </script>
 <style lang="scss">

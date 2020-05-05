@@ -1,9 +1,11 @@
 <template>
-  <v-app>
-    <v-content>
-      <SeparatedArea />
-    </v-content>
-  </v-app>
+  <div id="app">
+    <v-app>
+      <v-content>
+        <SeparatedArea />
+      </v-content>
+    </v-app>
+  </div>
 </template>
 
 <script>
